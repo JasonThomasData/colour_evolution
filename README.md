@@ -16,4 +16,4 @@ These circular animals/hatchlings will each have a colour_float property, which 
 
 The predators in this visualisation will select the hatchlings that have the highest absolute difference from the environment's floating point value.
 
-To avoid adding and removing lots of different DOM elements, I've created all the elements on initialisation. The caught hatchlings will have the appearance of dissapearing. Those elements will be placed back on the board, rather than having to create new ones, I've just reincarnated those hatchling shapes. 
+To avoid adding and removing lots of different DOM elements, I've created all the elements on initialisation. The caught hatchlings will have the appearance of dissapearing. Those elements will be placed back on the board, rather than having to create new ones, I've just reincarnated those hatchling shapes.
