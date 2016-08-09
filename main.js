@@ -2,15 +2,15 @@
 var environment_settings = {
     env_width_spaces: 12,
     space_width_px: 30,
-    env_colour_float: 0.1, //Refer to the colour scale below... this is a yellowish-green
+    env_colour_float: 0.5, //Refer to the colour scale below... this is a yellowish-green
     hatchling_number: 50,
     predator_number: 6,
     hatchling_stroke_colour: 'white',
     predator_stroke_colour: 'black',
     animal_stroke_width: 4,
     animation_duration: 800, //A single moment in animation. There are four of these
-    property_inheritance_factor: 0.4, //Two of these for each child
-    property_random_factor: 0.2 //A random element from the envrionment
+    property_inheritance_factor: 0.45, //Two of these for each child
+    property_random_factor: 0.1 //A random element from the envrionment
 }
 
 var animals_in_env = {
