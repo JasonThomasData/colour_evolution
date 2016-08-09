@@ -122,16 +122,20 @@ function compare(a,b) {
   return 0;
 }
 
+//Extending the array object's propeties
+Array.prototype.sample = function () {
+    return this[Math.floor(Math.random() * this.length)]
+}
+
 //This where a new hatchling inherits its properties
 function hatchlings_mate(){
-    var i_1 = [Math.floor(Math.random() * this.length)]
-    var i_2 = [Math.floor(Math.random() * this.length)]
-    var parent_1 = animals_in_env.hatchlings[i_1];
-    var parent_2 = animals_in_env.hatchlings[i_1];
+    var parent_1 = animals_in_env.hatchlings.sample();
+    var parent_2 = animals_in_env.hatchlings.sample();
+    var random_colour = Math.random();
 
     var hatchling_colour = (parent_1.colour_float * environment_settings.property_inheritance_factor) + 
         (parent_2.colour_float * environment_settings.property_inheritance_factor) + 
-        (Math.random() * environment_settings.property_random_factor);
+        (random_colour * environment_settings.property_random_factor);
 
     return hatchling_colour;
 }
@@ -142,13 +146,17 @@ setInterval(function() {
     //For each new or reincarnated hatchling, add this to env
     for (var i = 0; i < animals_in_env.hatchlings_to_be_born.length; i++) {
         var this_new_hatchling = animals_in_env.hatchlings[i];
+        var animal_type = 'hatchling';
         var random_coords = get_random_coords();
         this_new_hatchling.x_current = random_coords[0];
         this_new_hatchling.y_current = random_coords[1];
         var colour_float = hatchlings_mate();
         this_new_hatchling.colour_float = colour_float;
-        var animal_type = 'hatchling';
-        draw_animal_shape(this_new_hatchling.x_current, this_new_hatchling.y_current, this_new_hatchling.animal_shape, animal_type, colour_float, environment_settings.hatchling_stroke_colour, this_new_hatchling.radius)
+
+        draw_animal_shape(this_new_hatchling.x_current, this_new_hatchling.y_current, 
+            this_new_hatchling.animal_shape, animal_type, colour_float, 
+            environment_settings.hatchling_stroke_colour, this_new_hatchling.radius)
+
     }
     animals_in_env.hatchlings_to_be_born = [];
 
