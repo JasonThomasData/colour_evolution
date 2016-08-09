@@ -71,7 +71,6 @@ function draw_animal_shape(x, y, animal_shape, animal_type, colour_float, animal
         .transition()
         .duration(environment_settings.animation_duration)
         .attr('r', animal_radius);
-
 }
 
 //This is recursive, because if the random coords match coords that already exist, it gets called again and returned once
@@ -94,8 +93,7 @@ for (var i = 0; i < environment_settings.hatchling_number; i++) {
     var colour_float = Math.random();
     var animal_type = 'hatchling';
     var one_new_hatchling = new animal(random_coords[0],random_coords[1], colour_float, animal_type);
-    one_new_hatchling.animal_shape = d3.select('#visualisation').append('circle')
-    //draw_animal_shape(one_new_hatchling.x_current, one_new_hatchling.y_current,one_new_hatchling.animal_shape, one_new_hatchling.animal_type, one_new_hatchling.colour_float, environment_settings.hatchling_stroke_colour, one_new_hatchling.radius);
+    one_new_hatchling.animal_shape = d3.select('#visualisation').append('circle') //Each element's shape will persist in the env, and the hatchlings will be reincarnated, so we create the shapes here.
     animals_in_env.hatchlings.push(one_new_hatchling);
     animals_in_env.hatchlings_to_be_born.push(one_new_hatchling);
 }
@@ -107,7 +105,11 @@ for (var i = 0; i < environment_settings.predator_number; i++) {
     var animal_type = 'predator';
     var one_new_predator = new animal(i-1,-1, colour_float, animal_type);
     one_new_predator.animal_shape = d3.select('#visualisation').append('circle')
-    draw_animal_shape(one_new_predator.x_current, one_new_predator.y_current, one_new_predator.animal_shape, one_new_predator.animal_type, one_new_predator.colour_float, environment_settings.predator_stroke_colour, one_new_predator.radius);
+
+    draw_animal_shape(one_new_predator.x_current, one_new_predator.y_current, 
+        one_new_predator.animal_shape, one_new_predator.animal_type, one_new_predator.colour_float, 
+        environment_settings.predator_stroke_colour, one_new_predator.radius);
+
     animals_in_env.predators.push(one_new_predator);
 }
 
@@ -120,22 +122,24 @@ function compare(a,b) {
   return 0;
 }
 
+//This where a new hatchling inherits its properties
 function hatchlings_mate(){
-    var parent_1 = animals_in_env.hatchlings.sample();
-    var parent_2 = animals_in_env.hatchlings.sample();
-    var hatchling_colour = (parent_1.colour_float * environment_settings.property_inheritance_factor) + (parent_2.colour_float * environment_settings.property_inheritance_factor) + (Math.random() * environment_settings.property_random_factor);
-    console.log(hatchling_colour);
-    return hatchling_colour;
-}
+    var i_1 = [Math.floor(Math.random() * this.length)]
+    var i_2 = [Math.floor(Math.random() * this.length)]
+    var parent_1 = animals_in_env.hatchlings[i_1];
+    var parent_2 = animals_in_env.hatchlings[i_1];
 
-//Extending the array object's propeties
-Array.prototype.sample = function () {
-    return this[Math.floor(Math.random() * this.length)]
+    var hatchling_colour = (parent_1.colour_float * environment_settings.property_inheritance_factor) + 
+        (parent_2.colour_float * environment_settings.property_inheritance_factor) + 
+        (Math.random() * environment_settings.property_random_factor);
+
+    return hatchling_colour;
 }
 
 //The main loop. The callback here is * 4, since there are four moments in each loop
 setInterval(function() {
 
+    //For each new or reincarnated hatchling, add this to env
     for (var i = 0; i < animals_in_env.hatchlings_to_be_born.length; i++) {
         var this_new_hatchling = animals_in_env.hatchlings[i];
         var random_coords = get_random_coords();
@@ -148,13 +152,12 @@ setInterval(function() {
     }
     animals_in_env.hatchlings_to_be_born = [];
 
+    //Order the hatchlings according to most visible [first] to least visible [last]
     for (var i = 0; i < animals_in_env.hatchlings.length; i++) {
         var this_hatchling = animals_in_env.hatchlings[i];
         this_hatchling.env_colour_difference = Math.abs(environment_settings.env_colour_float - this_hatchling.colour_float)
-        //console.log(this_hatchling.env_colour_difference);
     }
     animals_in_env.hatchlings.sort(compare);
-    console.log(animals_in_env.hatchlings);
 
     for (var i = 0; i < animals_in_env.predators.length; i++) {
 
