@@ -2,7 +2,7 @@
 var environment_settings = {
     env_width_spaces: 12,
     space_width_px: 30,
-    env_colour_float: 0.5, //Refer to the colour scale below... this is a yellowish-green
+    env_colour_float: 0.15, //Refer to the colour scale below... this is a yellowish-green
     hatchling_number: 50,
     predator_number: 6,
     hatchling_stroke_colour: 'white',
@@ -48,6 +48,19 @@ var environment_background = d3.select('#visualisation')
     .attr('x', environment_settings.space_width_px)
     .attr('y', environment_settings.space_width_px)
     .attr('fill', colour_scale(environment_settings.env_colour_float));
+
+function set_env_colour(){
+    var select_box = document.getElementById('select_box');
+    var selected_value = select_box.options[select_box.selectedIndex].value;
+    environment_settings.env_colour_float = +selected_value;
+    environment_background
+        .attr('fill', colour_scale(environment_settings.env_colour_float));
+}
+set_env_colour()
+
+select_box.onchange=function(){
+    set_env_colour();
+};
 
 //This places predators and hatchlings on the env
 //cx and cy are plus 1 because the svg has a border all around it.
