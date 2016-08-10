@@ -2,7 +2,7 @@
 var environment_settings = {
     env_width_spaces: 12,
     space_width_px: 30,
-    env_colour_float: 0.15, //Refer to the colour scale below... this is a yellowish-green
+    env_colour_float: 0.0, //Refer to the colour scale below... this is a yellowish-green
     hatchling_number: 50,
     predator_number: 6,
     hatchling_stroke_colour: 'white',
@@ -32,7 +32,7 @@ var animal = function(x, y, colour_float, animal_type) {
 }
 
 var colour_scale = d3.scale.linear()
-    .domain([0.0, 0.1429, 0.2857, 0.4286, 0.5714, 0.7143, 1.0])
+    .domain([0.0, 0.1667, 0.3333, 0.5, 0.6667, 0.8333, 1.0])
     .range(["red", "orange", "yellow", "green", "blue", "indigo", "violet"]);
 
 //The two here is to give the env a padding of one space around the SVG
@@ -53,14 +53,30 @@ function set_env_colour(){
     var select_box = document.getElementById('select_box');
     var selected_value = select_box.options[select_box.selectedIndex].value;
     environment_settings.env_colour_float = +selected_value;
+
     environment_background
         .attr('fill', colour_scale(environment_settings.env_colour_float));
-}
-set_env_colour()
 
-select_box.onchange=function(){
+}
+set_env_colour();
+
+select_box.onchange=function() {
     set_env_colour();
 };
+
+//This is recursive, because if the random coords match coords that already exist, it gets called again and returned once
+function get_random_coords() {
+    var random_x = Math.floor(Math.random() * environment_settings.env_width_spaces);
+    var random_y = Math.floor(Math.random() * environment_settings.env_width_spaces);
+
+    for (var k = 0; k < animals_in_env.hatchlings.length; k++) {
+        if (random_x == animals_in_env.hatchlings[k].x_current && random_y == animals_in_env.hatchlings[k].y_current) {
+            return get_random_coords();
+        }
+    }
+
+    return [random_x, random_y];
+}
 
 //This places predators and hatchlings on the env
 //cx and cy are plus 1 because the svg has a border all around it.
@@ -74,30 +90,16 @@ function draw_animal_shape(x, y, animal_shape, animal_type, colour_float, animal
 
     if (animal_type == 'hatchling'){
         animal_shape
-            .attr('fill', colour_scale(colour_float))
+            .attr('fill', colour_scale(colour_float));
     } else {
         animal_shape
-            .attr('fill', 'none')
+            .attr('fill', 'none');
     }
 
     animal_shape
         .transition()
         .duration(environment_settings.animation_duration)
         .attr('r', animal_radius);
-}
-
-//This is recursive, because if the random coords match coords that already exist, it gets called again and returned once
-function get_random_coords() {
-    var random_x = Math.floor(Math.random() * environment_settings.env_width_spaces);
-    var random_y = Math.floor(Math.random() * environment_settings.env_width_spaces);
-
-    for (var k = 0; k < animals_in_env.hatchlings.length; k++){
-        if (random_x == animals_in_env.hatchlings[k].x_current && random_y == animals_in_env.hatchlings[k].y_current){
-            return get_random_coords();
-        }
-    }
-
-    return [random_x, random_y];
 }
 
 //Initialise the hatchlings
@@ -117,7 +119,7 @@ for (var i = 0; i < environment_settings.predator_number; i++) {
     var colour_float = null;
     var animal_type = 'predator';
     var one_new_predator = new animal(i-1,-1, colour_float, animal_type);
-    one_new_predator.animal_shape = d3.select('#visualisation').append('circle')
+    one_new_predator.animal_shape = d3.select('#visualisation').append('circle');
 
     draw_animal_shape(one_new_predator.x_current, one_new_predator.y_current, 
         one_new_predator.animal_shape, one_new_predator.animal_type, one_new_predator.colour_float, 
@@ -128,16 +130,17 @@ for (var i = 0; i < environment_settings.predator_number; i++) {
 
 //This handles the sorting of hatchlings by how different its colour is from the env
 function compare(a,b) {
-  if (a.env_colour_difference > b.env_colour_difference)
+  if (a.env_colour_difference > b.env_colour_difference) {
     return -1;
-  if (a.env_colour_difference < b.env_colour_difference)
+  } else if (a.env_colour_difference < b.env_colour_difference) {
     return 1;
+  }
   return 0;
 }
 
 //Extending the array object's propeties
 Array.prototype.sample = function () {
-    return this[Math.floor(Math.random() * this.length)]
+    return this[Math.floor(Math.random() * this.length)];
 }
 
 //This where a new hatchling inherits its properties
@@ -153,9 +156,22 @@ function hatchlings_mate(){
     return hatchling_colour;
 }
 
-//The main loop. The callback here is * 4, since there are four moments in each loop
+//Move this shape - predator or hatchling
+function move_shape(this_animal, delay_duration, animation_duration){
+    this_animal.animal_shape
+        .transition()
+        .delay(delay_duration)
+        .duration(animation_duration)
+        .attr('cx', ((this_animal.x_current + 1) * environment_settings.space_width_px) + environment_settings.space_width_px / 2)
+        .attr('cy', ((this_animal.y_current + 1) * environment_settings.space_width_px) + environment_settings.space_width_px / 2);
+}
+
+//The main loop.
+//Each turn the hatchlings are born to replenish the population. 
+//A predator moves to a hatchling and picks it up, carries it away. The hatchling dies.
 setInterval(function() {
 
+    //Anim_1 - hatchling numbers replenished
     //For each new or reincarnated hatchling, add this to env
     for (var i = 0; i < animals_in_env.hatchlings_to_be_born.length; i++) {
         var this_new_hatchling = animals_in_env.hatchlings[i];
@@ -168,7 +184,7 @@ setInterval(function() {
 
         draw_animal_shape(this_new_hatchling.x_current, this_new_hatchling.y_current, 
             this_new_hatchling.animal_shape, animal_type, colour_float, 
-            environment_settings.hatchling_stroke_colour, this_new_hatchling.radius)
+            environment_settings.hatchling_stroke_colour, this_new_hatchling.radius);
 
     }
     animals_in_env.hatchlings_to_be_born = [];
@@ -176,47 +192,34 @@ setInterval(function() {
     //Order the hatchlings according to most visible [first] to least visible [last]
     for (var i = 0; i < animals_in_env.hatchlings.length; i++) {
         var this_hatchling = animals_in_env.hatchlings[i];
-        this_hatchling.env_colour_difference = Math.abs(environment_settings.env_colour_float - this_hatchling.colour_float)
+        this_hatchling.env_colour_difference = Math.abs(environment_settings.env_colour_float - this_hatchling.colour_float);
     }
     animals_in_env.hatchlings.sort(compare);
 
     for (var i = 0; i < animals_in_env.predators.length; i++) {
 
-        //Predator picks up a hatchling
+        //Anim_2 - Predator picks up a hatchling
         var random_x = Math.floor(Math.random() * environment_settings.env_width_spaces);
         var random_y = Math.floor(Math.random() * environment_settings.env_width_spaces);
         var this_predator = animals_in_env.predators[i];
         var this_hatchling = animals_in_env.hatchlings[i];
-        animals_in_env.hatchlings_to_be_born.push(this_hatchling); //This hatchling we will reincarnate
         this_predator.x_current = this_hatchling.x_current;
         this_predator.y_current = this_hatchling.y_current;
-        this_predator.animal_shape
-            .transition()
-            .delay(environment_settings.animation_duration)
-            .duration(environment_settings.animation_duration)
-            .attr('cx', ((this_predator.x_current + 1) * environment_settings.space_width_px) + environment_settings.space_width_px / 2)
-            .attr('cy', ((this_predator.y_current + 1) * environment_settings.space_width_px) + environment_settings.space_width_px / 2);
+        move_shape(this_predator, environment_settings.animation_duration, environment_settings.animation_duration);
 
-        //Move predator back to initial location
+        //Anim_3 - Move predator back to initial location
         this_predator.x_current = this_predator.x_initial;
         this_predator.y_current = this_predator.y_initial;
-        this_predator.animal_shape
-            .transition()
-            //This part takes 1/4 of the animation
-            .delay(environment_settings.animation_duration * 2)
-            .duration(environment_settings.animation_duration)
-            .attr('cx', ((this_predator.x_current + 1) * environment_settings.space_width_px) + environment_settings.space_width_px / 2)
-            .attr('cy', ((this_predator.y_current + 1) * environment_settings.space_width_px) + environment_settings.space_width_px / 2);
+        move_shape(this_predator, environment_settings.animation_duration * 2, environment_settings.animation_duration);
         //The hatchling goes with it
-        this_hatchling.animal_shape
-            .transition()
-            //This part takes 1/4 of the animation
-            .delay(environment_settings.animation_duration * 2)
-            .duration(environment_settings.animation_duration)
-            .attr('cx', ((this_predator.x_current + 1) * environment_settings.space_width_px) + environment_settings.space_width_px / 2)
-            .attr('cy', ((this_predator.y_current + 1) * environment_settings.space_width_px) + environment_settings.space_width_px / 2);
+        this_hatchling.x_current = this_predator.x_current;
+        this_hatchling.y_current = this_predator.y_current;
+        move_shape(this_hatchling, environment_settings.animation_duration * 2, environment_settings.animation_duration);
 
-        //The hatchling disappears
+        //This hatchling we will reincarnate
+        animals_in_env.hatchlings_to_be_born.push(this_hatchling); 
+
+        //Anim_4 - The hatchling disappears
         this_hatchling.animal_shape
             .transition()
             //This part takes 1/4 of the animation
@@ -224,4 +227,5 @@ setInterval(function() {
             .duration(environment_settings.animation_duration)
             .attr('r', 0);
     }
+    //The callback here is * 4, since there are four moments in each loop
 }, environment_settings.animation_duration * 4)
